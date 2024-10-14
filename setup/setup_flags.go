@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 )
 
