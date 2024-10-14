@@ -44,8 +44,18 @@ func GetDefaultSetupFlags() (SetupFlags, error) {
 		PackageName:    "gurobi",
 	}
 
-	// Search through Mac Library for all instances of Gurobi
-	libraryContents, err := os.ReadDir("/Library")
+	// Choose base dir
+	switch runtime.GOOS {
+	case "darwin":
+		base := "/Library"
+	case "linux":
+		base := "/opt"
+	default:
+		return "", fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
+	}
+
+	// Search through for all instances of Gurobi
+	libraryContents, err := os.ReadDir(base)
 	if err != nil {
 		return mlf, err
 	}

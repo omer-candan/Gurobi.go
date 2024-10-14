@@ -28,9 +28,21 @@ Description:
 	the Gurobi Installer.
 */
 func CreateGurobiHomeDirectory(versionInfo GurobiVersionInfo) (string, error) {
+
+	// Choose base dir
+	switch runtime.GOOS {
+	case "darwin":
+		base := "/Library"
+	case "linux":
+		base := "/opt"
+	default:
+		return "", fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
+	}
+
 	// Create Base Home Directory
 	gurobiHome := fmt.Sprintf(
-		"/Library/gurobi%v%v%v",
+		"%v/gurobi%v%v%v",
+		base,
 		versionInfo.MajorVersion,
 		versionInfo.MinorVersion,
 		versionInfo.TertiaryVersion,
@@ -50,6 +62,9 @@ func CreateGurobiHomeDirectory(versionInfo GurobiVersionInfo) (string, error) {
 			gurobiHome := fmt.Sprintf("%v/macos_universal2", gurobiHome)
 			return gurobiHome, nil
 		}
+	case "linux":
+		gurobiHome := fmt.Sprintf("%v/linux64", gurobiHome)
+		return gurobiHome, nil
 	default:
 		return "", fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
 	}
