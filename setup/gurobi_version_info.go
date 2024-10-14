@@ -30,11 +30,12 @@ Description:
 func CreateGurobiHomeDirectory(versionInfo GurobiVersionInfo) (string, error) {
 
 	// Choose base dir
+	var base string
 	switch runtime.GOOS {
 	case "darwin":
-		base := "/Library"
+		base = "/Library"
 	case "linux":
-		base := "/opt"
+		base = "/opt"
 	default:
 		return "", fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
 	}

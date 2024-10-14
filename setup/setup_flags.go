@@ -53,7 +53,7 @@ func GetDefaultSetupFlags() (SetupFlags, error) {
 	case "linux":
 		base = "/opt"
 	default:
-		return "", fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
+		return SetupFlags{}, fmt.Errorf("The operating system that you are using is not recognized: \"%v\".", runtime.GOOS)
 	}
 
 	// Search through for all instances of Gurobi
