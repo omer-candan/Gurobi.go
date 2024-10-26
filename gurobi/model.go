@@ -707,6 +707,14 @@ func (model *Model) Write(filename string) error {
 	return nil
 }
 
+func (model *Model) NumVars() (int32, error) {
+	return model.GetIntAttr(gurobi.INT_ATTR_NUMVARS)
+}
+
+func (model *Model) NumConstrs() (int32, error) {
+	return model.GetIntAttr(gurobi.INT_ATTR_NUMCONSTRS)
+}
+
 // GetIntAttr ...
 func (model *Model) GetIntAttr(attrname string) (int32, error) {
 	if model == nil {
