@@ -90,6 +90,29 @@ func (env *Env) GetTimeLimit() (float64, error) {
 }
 
 /*
+SetIntParam()
+Description:
+
+	Mirrors the functionality of the GRBsetintattr() function from the C api.
+	Sets the parameter of the solver that has name paramName with value val.
+*/
+func (env *Env) SetIntParam(paramName string, val int32) error {
+	// Check that the env object is not nil.
+	if env == nil {
+		return fmt.Errorf("env is nil!")
+	}
+
+	// Set Attribute
+	errcode := int(C.GRBsetintparam(env.env, C.CString(paramName), C.int(val)))
+	if errcode != 0 {
+		return fmt.Errorf("There was an error running GRBsetintparam(), errcode %v", errcode)
+	}
+
+	// If everything was successful, then return nil.
+	return nil
+}
+
+/*
 SetDBLParam()
 Description:
 
@@ -104,7 +127,7 @@ func (env *Env) SetDBLParam(paramName string, val float64) error {
 
 	// Check that the env object is not nil.
 	if env == nil {
-		return fmt.Errorf("The input env variable to SetTimeLimit() was nil!")
+		return fmt.Errorf("env is nil!")
 	}
 
 	// Set Attribute
@@ -133,7 +156,7 @@ func (env *Env) GetDBLParam(paramName string) (float64, error) {
 
 	// Check environment input
 	if env == nil {
-		return -1, fmt.Errorf("The input env variable to SetTimeLimit() was nil!")
+		return -1, fmt.Errorf("env is nil!")
 	}
 
 	// Use GRBgetdblparam
