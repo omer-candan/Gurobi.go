@@ -74,6 +74,32 @@ func NewModel(modelname string, env *Env) (*Model, error) {
 	return &Model{AsGRBModel: model, Env: Env{newenv}}, nil
 }
 
+/*
+LoadModel
+Description:
+
+	Loads a model from a file
+*/
+func LoadModel(modelPath string, env *Env) (*Model, error) {
+	err := env.Check()
+	if err != nil {
+		return nil, env.MakeUninitializedError()
+	}
+
+	var model *C.GRBmodel
+	errcode := C.GRBreadmodel(env.env, C.CString(modelPath), &model)
+	if errcode != 0 {
+		return nil, env.MakeError(errcode)
+	}
+
+	newenv := C.GRBgetenv(model)
+	if newenv == nil {
+		return nil, errors.New("Failed retrieve the environment")
+	}
+
+	return &Model{AsGRBModel: model, Env: Env{newenv}}, nil
+}
+
 // Free ...
 // free the model
 func (model *Model) Free() {
