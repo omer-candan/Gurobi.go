@@ -3,7 +3,6 @@ package gurobi
 // #include <gurobi_passthrough.h>
 import "C"
 import (
-	"errors"
 	"fmt"
 )
 
@@ -16,7 +15,11 @@ func NewEnv(logfilename string) (*Env, error) {
 	var env *C.GRBenv = nil
 	errcode := int(C.GRBloadenv(&env, C.CString(logfilename)))
 	if errcode != 0 {
-		return nil, errors.New("Cannot create environment.")
+		errMsg, err := C.GRBgeterrormsg(env)
+		if err != nil {
+			return nil, fmt.Errorf("Cannot create environment. Error code: %v. Error when getting corresponding error message: %v", errcode, err)
+		}
+		return nil, fmt.Errorf("Cannot create environment. Error code: %d. Error message: %v", errcode, (errMsg))
 	}
 
 	return &Env{env}, nil
@@ -159,6 +162,24 @@ func IsValidDBLParam(paramName string) bool {
 	}
 
 	return paramNameIsValid
+}
+
+/*
+SetStringParam
+Description:
+*/
+func (env *Env) SetStringParam(param string, newvalue string) error {
+	err := env.Check()
+	if err != nil {
+		return env.MakeUninitializedError()
+	}
+
+	errcode := int(C.GRBsetstrparam(env.env, C.CString(param), C.CString(newvalue)))
+	if errcode != 0 {
+		return fmt.Errorf("There was an error running GRBsetstrparam(): Error code %v", errcode)
+	}
+
+	return nil
 }
 
 /*
