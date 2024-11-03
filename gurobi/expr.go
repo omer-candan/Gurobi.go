@@ -2,19 +2,19 @@ package gurobi
 
 // Linear expression of variables
 type LinExpr struct {
-	ind    []*Var
-	val    []float64
-	offset float64
+	Ind    []*Var
+	Val    []float64
+	Offset float64
 }
 
 func (expr *LinExpr) AddTerm(v *Var, c float64) *LinExpr {
-	expr.ind = append(expr.ind, v)
-	expr.val = append(expr.val, c)
+	expr.Ind = append(expr.Ind, v)
+	expr.Val = append(expr.Val, c)
 	return expr
 }
 
 func (expr *LinExpr) AddConstant(c float64) *LinExpr {
-	expr.offset += c
+	expr.Offset += c
 	return expr
 }
 
