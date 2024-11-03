@@ -162,8 +162,6 @@ func (model *Model) AddVar(vtype int8, obj float64, lb float64, ub float64, name
 		return nil, err
 	}
 
-	fmt.Println("dummy-2")
-
 	model.Variables = append(model.Variables, Var{model, int32(len(model.Variables))})
 	return &model.Variables[len(model.Variables)-1], nil
 }
@@ -251,6 +249,80 @@ func (model *Model) AddVars(vtypes []int8, objs []float64, lbs []float64, ubs []
 	for i := xcols; i < xcols+len(vtypes); i++ {
 		model.Variables = append(model.Variables, Var{model, int32(i)})
 		vars[i] = &model.Variables[len(model.Variables)-1]
+	}
+	return vars, nil
+}
+
+func (model *Model) AddVarsWithTypes(count int, vtype int8) ([]*Var, error) {
+	vtypes := make([]int8, count)
+
+	for i := 0; i < count; i++ {
+		vtypes[i] = vtype
+	}
+
+	pbeg := (*C.int)(nil)
+	pind := (*C.int)(nil)
+	pval := (*C.double)(nil)
+
+	pobjs := (*C.double)(nil)
+	plbs := (*C.double)(nil)
+	pubs := (*C.double)(nil)
+	pvtypes := (*C.char)(nil)
+	pnames := (**C.char)(nil)
+
+	pvtypes = (*C.char)(&vtypes[0])
+
+	errCode := C.GRBaddvars(model.AsGRBModel, C.int(count), C.int(0), pbeg, pind, pval, pobjs, plbs, pubs, pvtypes, pnames)
+	if errCode != 0 {
+		return nil, model.MakeError(errCode)
+	}
+
+	if err := model.Update(); err != nil {
+		return nil, err
+	}
+
+	//fmt.Printf("len(vtypes)=%v\n", len(vtypes))
+
+	vars := make([]*Var, len(vtypes))
+	xcols := len(model.Variables)
+	for i := xcols; i < xcols+len(vtypes); i++ {
+		model.Variables = append(model.Variables, Var{model, int32(i)})
+		vars[i-xcols] = &model.Variables[len(model.Variables)-1]
+	}
+	return vars, nil
+}
+
+func (model *Model) AddVarsWithoutTypes(lbs []float64, ubs []float64) ([]*Var, error) {
+
+	pbeg := (*C.int)(nil)
+	pind := (*C.int)(nil)
+	pval := (*C.double)(nil)
+
+	pobjs := (*C.double)(nil)
+	plbs := (*C.double)(nil)
+	pubs := (*C.double)(nil)
+	pvtypes := (*C.char)(nil)
+	pnames := (**C.char)(nil)
+
+	plbs = (*C.double)(&lbs[0])
+	pubs = (*C.double)(&ubs[0])
+
+	errCode := C.GRBaddvars(model.AsGRBModel, C.int(len(lbs)), C.int(0), pbeg, pind, pval, pobjs, plbs, pubs, pvtypes, pnames)
+	if errCode != 0 {
+		return nil, model.MakeError(errCode)
+	}
+
+	if err := model.Update(); err != nil {
+		return nil, err
+	}
+
+	//fmt.Printf("len(vtypes)=%v\n", len(vtypes))
+
+	vars := make([]*Var, len(lbs))
+	xcols := len(model.Variables)
+	for i := xcols; i < xcols+len(lbs); i++ {
+		model.Variables = append(model.Variables, Var{model, int32(i)})
+		vars[i-xcols] = &model.Variables[len(model.Variables)-1]
 	}
 	return vars, nil
 }
@@ -367,9 +439,14 @@ func (model *Model) AddConstr(vars []*Var, val []float64, sense int8, rhs float6
 	//fmt.Printf("pind = %v\n", *pind)
 	//fmt.Printf("ind = %v\n vars[0] = %v\n", ind, vars[0].Index)
 
+	var length int32
+	length = (int32)(len(ind))
+
+	C.GRBclean2((*C.int)(&length), pind, pval)
+
 	errCode := C.GRBaddconstr(
 		model.AsGRBModel,
-		C.int(len(ind)),
+		C.int(length),
 		pind, pval,
 		C.char(sense), C.double(rhs), C.CString(constrname))
 	if errCode != 0 {
@@ -582,9 +659,9 @@ func (model *Model) SetLinearObjective(expr *LinExpr, sense int32) error {
 	// Constants
 
 	// Algorithm
-	for tempIndex, tempVar := range expr.ind {
+	for tempIndex, tempVar := range expr.Ind {
 		// Add Each to the objective, by modifying the obj attribute
-		if err := tempVar.SetObj(expr.val[tempIndex]); err != nil {
+		if err := tempVar.SetObj(expr.Val[tempIndex]); err != nil {
 			return err
 		}
 	}
@@ -592,7 +669,7 @@ func (model *Model) SetLinearObjective(expr *LinExpr, sense int32) error {
 	// if err := model.SetDoubleAttrVars(C.GRB_DBL_ATTR_OBJ, expr.lind, expr.lval); err != nil {
 	// 	return err
 	// }
-	if err := model.SetDoubleAttr(C.GRB_DBL_ATTR_OBJCON, expr.offset); err != nil {
+	if err := model.SetDoubleAttr(C.GRB_DBL_ATTR_OBJCON, expr.Offset); err != nil {
 		return err
 	}
 	if err := model.SetIntAttr(C.GRB_INT_ATTR_MODELSENSE, sense); err != nil {
@@ -708,11 +785,11 @@ func (model *Model) Write(filename string) error {
 }
 
 func (model *Model) NumVars() (int32, error) {
-	return model.GetIntAttr(gurobi.INT_ATTR_NUMVARS)
+	return model.GetIntAttr(INT_ATTR_NUMVARS)
 }
 
 func (model *Model) NumConstrs() (int32, error) {
-	return model.GetIntAttr(gurobi.INT_ATTR_NUMCONSTRS)
+	return model.GetIntAttr(INT_ATTR_NUMCONSTRS)
 }
 
 // GetIntAttr ...
