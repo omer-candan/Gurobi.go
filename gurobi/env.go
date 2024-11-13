@@ -10,16 +10,16 @@ type Env struct {
 	env *C.GRBenv
 }
 
-// create a new environment.
+// NewEnv create a new environment.
 func NewEnv(logfilename string) (*Env, error) {
 	var env *C.GRBenv = nil
 	errcode := int(C.GRBloadenv(&env, C.CString(logfilename)))
 	if errcode != 0 {
 		errMsg, err := C.GRBgeterrormsg(env)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot create environment. Error code: %v. Error when getting corresponding error message: %v", errcode, err)
+			return nil, fmt.Errorf("cannot create environment. Error code: %v. Error when getting corresponding error message: %v", errcode, err)
 		}
-		return nil, fmt.Errorf("Cannot create environment. Error code: %d. Error message: %v", errcode, (errMsg))
+		return nil, fmt.Errorf("cannot create environment. Error code: %d. Error message: %v", errcode, (errMsg))
 	}
 
 	return &Env{env}, nil
@@ -50,9 +50,9 @@ func (env *Env) SetTimeLimit(limitIn float64) error {
 	}
 
 	// Algorithm
-	errcode := int(C.GRBsetdblparam(env.env, C.CString(paramName), C.double(limitIn)))
-	if errcode != 0 {
-		return fmt.Errorf("There was an error running GRBsetdblparam(): Error code %v", errcode)
+	errCode := int(C.GRBsetdblparam(env.env, C.CString(paramName), C.double(limitIn)))
+	if errCode != 0 {
+		return fmt.Errorf("there was an error running GRBsetdblparam(): Error code %v", errCode)
 	}
 
 	// If everything was successful, then return nil.
@@ -79,9 +79,9 @@ func (env *Env) GetTimeLimit() (float64, error) {
 
 	// Algorithm
 	var limitOut C.double
-	errcode := int(C.GRBgetdblparam(env.env, C.CString(paramName), &limitOut))
-	if errcode != 0 {
-		return -1, fmt.Errorf("There was an error running GRBsetdblparam(): Error code %v", errcode)
+	errCode := int(C.GRBgetdblparam(env.env, C.CString(paramName), &limitOut))
+	if errCode != 0 {
+		return -1, fmt.Errorf("there was an error running GRBsetdblparam(): Error code %v", errCode)
 	}
 
 	// If everything was successful, then return nil.
@@ -90,22 +90,22 @@ func (env *Env) GetTimeLimit() (float64, error) {
 }
 
 /*
-SetIntParam()
+SetIntParam
 Description:
 
 	Mirrors the functionality of the GRBsetintattr() function from the C api.
 	Sets the parameter of the solver that has name paramName with value val.
 */
-func (env *Env) SetIntParam(paramName string, val int32) error {
+func (env *Env) SetIntParam(paramName string, val int) error {
 	// Check that the env object is not nil.
 	if env == nil {
-		return fmt.Errorf("env is nil!")
+		return fmt.Errorf("env is nil")
 	}
 
 	// Set Attribute
-	errcode := int(C.GRBsetintparam(env.env, C.CString(paramName), C.int(val)))
-	if errcode != 0 {
-		return fmt.Errorf("There was an error running GRBsetintparam(), errcode %v", errcode)
+	errCode := int(C.GRBsetintparam(env.env, C.CString(paramName), C.int(val)))
+	if errCode != 0 {
+		return fmt.Errorf("there was an error running GRBsetintparam(), errCode %v", errCode)
 	}
 
 	// If everything was successful, then return nil.
@@ -113,7 +113,7 @@ func (env *Env) SetIntParam(paramName string, val int32) error {
 }
 
 /*
-SetDBLParam()
+SetDBLParam
 Description:
 
 	Mirrors the functionality of the GRBsetdblattr() function from the C api.
@@ -127,7 +127,7 @@ func (env *Env) SetDBLParam(paramName string, val float64) error {
 
 	// Check that the env object is not nil.
 	if env == nil {
-		return fmt.Errorf("env is nil!")
+		return fmt.Errorf("env is nil")
 	}
 
 	// Set Attribute
@@ -142,7 +142,7 @@ func (env *Env) SetDBLParam(paramName string, val float64) error {
 }
 
 /*
-GetDBLParam()
+GetDBLParam
 Description:
 
 	Mirrors the functionality of the GRBgetdblattr() function from the C api.
@@ -156,7 +156,7 @@ func (env *Env) GetDBLParam(paramName string) (float64, error) {
 
 	// Check environment input
 	if env == nil {
-		return -1, fmt.Errorf("env is nil!")
+		return -1, fmt.Errorf("env is nil")
 	}
 
 	// Use GRBgetdblparam
@@ -172,7 +172,13 @@ func (env *Env) GetDBLParam(paramName string) (float64, error) {
 
 func IsValidDBLParam(paramName string) bool {
 	// All param names
-	var scalarDoubleAttributes []string = []string{"TimeLimit", "Cutoff", "BestObjStop"}
+	var scalarDoubleAttributes = []string{
+		"TimeLimit",
+		"Cutoff",
+		"BestObjStop",
+		"MIPGap",
+		"Heuristics",
+	}
 
 	// Check that attribute is actually a scalar double attribute.
 	paramNameIsValid := false
@@ -197,9 +203,9 @@ func (env *Env) SetStringParam(param string, newvalue string) error {
 		return env.MakeUninitializedError()
 	}
 
-	errcode := int(C.GRBsetstrparam(env.env, C.CString(param), C.CString(newvalue)))
-	if errcode != 0 {
-		return fmt.Errorf("There was an error running GRBsetstrparam(): Error code %v", errcode)
+	errCode := int(C.GRBsetstrparam(env.env, C.CString(param), C.CString(newvalue)))
+	if errCode != 0 {
+		return fmt.Errorf("There was an error running GRBsetstrparam(): Error code %v", errCode)
 	}
 
 	return nil
@@ -209,7 +215,7 @@ func (env *Env) SetStringParam(param string, newvalue string) error {
 Check
 Description:
 
-	Checks whether or not the given environment is well-formed.
+	Checks whether the given environment is well-formed.
 */
 func (env *Env) Check() error {
 	if env == nil {
